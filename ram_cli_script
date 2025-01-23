@@ -1,0 +1,28 @@
+sudo dmidecode --type memory | awk '
+/Physical Memory Array/ {in_array = 1}
+/Maximum Capacity:/ && in_array {max_capacity = $3 " " $4}
+/Number Of Devices:/ && in_array {num_devices = $4}
+/Size:/ && $2 ~ /^[0-9]+$/ {total += $2; count++; sizes[$2]++}
+/Type:/ && !/Configured/ && $2 !~ /Error|Correction|<OUT/ {type=$2}
+/Speed:/ && !/Configured/ && $2 ~ /^[0-9]+$/ {speeds[$2]++}
+/Manufacturer:/ {manufacturers[$2 ~ /^(Unknown|NO)$/ ? "NOT USED" : $2]++}
+/Part Number:/ {models[$3 ~ /^(Unknown|NO)$/ ? "NOT USED" : $3]++}
+END {
+    printf "RAM Total Size:   %d GB | Number of Modules: %d \n", total, count;
+    if (max_capacity && num_devices) {
+        printf "Maximum Capacity: %s | Number Of Devices: %d\n", max_capacity, num_devices;
+    }
+    printf "Module Sizes:\n";
+    for (s in sizes) printf "  - %d GB (Count: %d)\n", s, sizes[s];
+    printf "Speeds:\n";
+    for (sp in speeds) printf "  - %d MT/s (Count: %d)\n", sp, speeds[sp];
+    printf "Type: %s\n", (type ? type : "Unknown");
+    printf "Manufacturers:\n";
+    for (m in manufacturers) {
+        printf "  - %s (Count: %d)\n", m, manufacturers[m];
+    }
+    printf "Models:\n";
+    for (model in models) {
+        printf "  - Model %s (Count: %d)\n", model, models[model];
+    }
+}'
